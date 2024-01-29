@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <title>Points Show - Sample</title>
+  <link rel="stylesheet" th:href="@{/css/tableStyleModern.css}" />
+  <script th:inline="javascript">
+    var numTeams = [[${tableInfo.numTeams}]];
+    var numCategories = [[${tableInfo.categories != null ? tableInfo.categories.size() : 0}]];
+    var categories = [[${tableInfo.categories}]];
+  </script>
+  <script th:inline="javascript" src="/sample/sample.js"></script>
+</head>
+<body>
+<table id="table"></table>
+</body>
+</html>

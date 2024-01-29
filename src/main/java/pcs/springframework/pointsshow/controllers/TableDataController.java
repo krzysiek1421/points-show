@@ -21,6 +21,7 @@ public class TableDataController {
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
     private final TableInfo tableInfo;
 
+
     private TableDataController(TableInfo tableInfo){
         this.tableInfo = tableInfo;
     }
@@ -66,6 +67,17 @@ public class TableDataController {
         return ResponseEntity.ok("Points reset successfully");
     }
 
+    @GetMapping("/table-updates")
+    public SseEmitter handleTableUpdates() {
+        return createSseEmitter();
+    }
+
+    @GetMapping("/change-total-visibility")
+    public ResponseEntity<String> changeTotalVisibility() {
+        sendUpdateToClients(tableInfo);
+        return ResponseEntity.ok("Total visibility changed successfully");
+    }
+
     private SseEmitter createSseEmitter() {
         SseEmitter emitter = new SseEmitter(Long.MAX_VALUE);
         emitters.add(emitter);
@@ -77,30 +89,15 @@ public class TableDataController {
         return emitter;
     }
 
-
-    @GetMapping("/table-updates")
-    public SseEmitter handleTableUpdates() {
-        return createSseEmitter();
-    }
-
     private void resetTablePoints() {
         for(List<Integer> list : tableInfo.getPoints()){
             list.replaceAll(i -> 0);
         }
     }
 
-    private void sendResetToClients() {
-        for (SseEmitter emitter : emitters) {
-            try {
-                emitter.send(SseEmitter.event().name("reset").data("{\"reset\":true}"));
-            } catch (IOException e) {
-                emitters.remove(emitter);
-            }
-        }
-    }
     public void sendUpdateToClients(Object updateData) {
         synchronized(emitters) {
-            for (SseEmitter emitter : new ArrayList<>(emitters)) { // Użyj kopii listy tutaj również
+            for (SseEmitter emitter : new ArrayList<>(emitters)) {
                 try {
                     emitter.send(SseEmitter.event().data(updateData));
                 } catch (IOException e) {
