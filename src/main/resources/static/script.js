@@ -5,8 +5,6 @@ window.onload = function() {
     var emptyHeaderCell = document.createElement('th');
     headerRow.appendChild(emptyHeaderCell);
     var imgElement = document.createElement('img');
-    imgElement.setAttribute('src', '/logo.png');
-
     emptyHeaderCell.appendChild(imgElement);
 
     headerRow.appendChild(emptyHeaderCell);
@@ -14,7 +12,6 @@ window.onload = function() {
     imgElement.style.maxWidth = '100%';
     imgElement.style.maxHeight = '100%';
 
-    // Zakładamy, że numTeams i categories są gdzieś zdefiniowane
     for (var i = 0; i < numTeams; i++) {
         var headerCell = document.createElement('th');
         headerCell.textContent = 'Team ' + (i + 1);
