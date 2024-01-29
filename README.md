@@ -26,7 +26,13 @@ A client (e.g., a score display) maintains an open SSE connection with the Sprin
 
 ## Launch Instructions
 
-- Coming soon
+### 1. Run the command below to build the docker image:
+docker build -t points-show .
+
+### 2. Run the Docker Container:
+docker run -p 8080:8080 points-show
+
+### 3. Access the app via your localhost at port 8080 with endpoint /get-sample
 
 ## Additional Note
 
