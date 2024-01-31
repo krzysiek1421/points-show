@@ -45,5 +45,4 @@ public class TableViewController {
                 .collect(Collectors.toList());
         tableInfo.setPoints(points);
     }
-
 }

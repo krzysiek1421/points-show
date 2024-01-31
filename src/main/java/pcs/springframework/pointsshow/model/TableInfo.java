@@ -11,6 +11,7 @@ public class TableInfo {
     private List<String> categories;
     private List<List<Integer>> points;
     private int totalPoints;
+    private boolean totalVisibility = true;
 
     @Override
     public String toString() {
@@ -24,6 +25,15 @@ public class TableInfo {
 
 
     // Getters and setters for each field
+
+
+    public boolean isTotalVisibility() {
+        return totalVisibility;
+    }
+
+    public void setTotalVisibility(boolean totalVisibility) {
+        this.totalVisibility = totalVisibility;
+    }
 
     public int getNumTeams() {
         return numTeams;

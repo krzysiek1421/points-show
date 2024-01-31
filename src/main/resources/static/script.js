@@ -37,6 +37,7 @@ window.onload = function() {
     }
 
     var totalRow = document.createElement('tr');
+    totalRow.id = 'totalRow';
     var totalCell = document.createElement('td');
     totalCell.textContent = 'Total';
     totalRow.appendChild(totalCell);
@@ -48,8 +49,8 @@ window.onload = function() {
     table.appendChild(totalRow);
 
     function updateTableWithNewData(data) {
-        if (!data || !data.categories || !data.points) {
-            console.error('Invalid data received');
+        if (!data || !data.categories || !data.points || typeof data.numTeams !== 'number') {
+            console.error('Invalid data received', data);
             return;
         }
 
@@ -78,23 +79,19 @@ window.onload = function() {
                 }
             }
         }
+        setTotalVisibility();
     }
 
-    function resetPoints() {
-        var table = document.getElementById('table');
-        for (var i = 1; i < table.rows.length - 1; i++) {
-            var row = table.rows[i];
-            for (var j = 1; j < row.cells.length; j++) {
-                var cell = row.cells[j];
-                cell.textContent = '0';
-                cell.classList.remove('points-pulse-animation');
+    function setTotalVisibility() {
+        var totalRow = document.getElementById('totalRow');
+        if (totalRow) {
+            totalRow.classList.add('total-row-fade');
+            if (totalVisibility) {
+                totalRow.classList.add('total-row-visible');
+            } else {
+                totalRow.classList.remove('total-row-visible');
             }
         }
-
-        // var totalRow = table.rows[table.rows.length - 1];
-        // for (var i = 1; i < totalRow.cells.length; i++) {
-        //     totalRow.cells[i].textContent = '0';
-        // }
     }
 
     function calculateTeamTotals(data) {
@@ -107,11 +104,25 @@ window.onload = function() {
         return teamTotals;
     }
 
+    var totalVisibilityEventSource = new EventSource('/get-total-visibility');
+    totalVisibilityEventSource.onmessage = function(event) {
+        var data = JSON.parse(event.data);
+        console.log("Visible changed", data);
+        if (typeof data === 'boolean') {
+            totalVisibility = data;
+            console.log("Actual visibility:", totalVisibility);
+            setTotalVisibility();
+        }
+    }
+
     var eventSource = new EventSource('/table-updates');
     eventSource.onmessage = function(event) {
         var data = JSON.parse(event.data);
-        updateTableWithNewData(data);
+        if (data && typeof data === 'object' && data.categories && data.points && typeof data.numTeams === 'number') {
+            updateTableWithNewData(data);
+        }
     };
+
 
     eventSource.onerror = function(err) {
         console.error('EventSource failed:', err);
@@ -121,4 +132,4 @@ window.onload = function() {
     window.onbeforeunload = function() {
         eventSource.close();
     };
-    }
+}

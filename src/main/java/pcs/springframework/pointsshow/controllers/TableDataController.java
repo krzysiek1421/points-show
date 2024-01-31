@@ -21,7 +21,6 @@ public class TableDataController {
     private final List<SseEmitter> emitters = new CopyOnWriteArrayList<>();
     private final TableInfo tableInfo;
 
-
     private TableDataController(TableInfo tableInfo){
         this.tableInfo = tableInfo;
     }
@@ -34,8 +33,6 @@ public class TableDataController {
         return ResponseEntity.ok("Table created successfully");
     }
 
-
-
     @GetMapping("/get-table-info")
     public TableInfo getTable() {
         return tableInfo;
@@ -43,24 +40,15 @@ public class TableDataController {
 
     @PutMapping("/update")
     public ResponseEntity<String> updateTableData(@RequestBody UpdatePointsRequest request) {
-        int teamIndex = request.getTeamId() - 1;
-        int categoryIndex = tableInfo.getCategories().indexOf(request.getCategory());
-
-        if (categoryIndex < 0 || teamIndex < 0 || teamIndex >= tableInfo.getNumTeams()) {
-            return ResponseEntity.badRequest().body("Invalid team ID or category");
-        }
-
-        if (tableInfo.getPoints() == null) {
-            initializePointsList(tableInfo.getNumTeams(), tableInfo.getCategories().size());
-        }
-        Integer currentPoints = tableInfo.getPoints().get(categoryIndex).get(teamIndex);
-        currentPoints += request.getPoints();
-        tableInfo.getPoints().get(categoryIndex).set(teamIndex, currentPoints);
-        sendUpdateToClients(tableInfo);
-        return ResponseEntity.ok("Points updated successfully");
+        return updatePoints(request, this::addPointsToTeam);
     }
 
-    @GetMapping("/reset-points")
+    @PutMapping("/update-score")
+    public ResponseEntity<String> updateScore(@RequestBody UpdatePointsRequest request) {
+        return updatePoints(request, this::changeTeamScore);
+    }
+
+    @PutMapping("/reset-points")
     public ResponseEntity<String> resetPoints() {
         resetTablePoints();
         sendUpdateToClients(tableInfo);
@@ -72,9 +60,26 @@ public class TableDataController {
         return createSseEmitter();
     }
 
-    @GetMapping("/change-total-visibility")
+    @GetMapping("/get-total-visibility")
+    public SseEmitter getTotalVisibility() {
+        SseEmitter emitter = createSseEmitter();
+
+        try {
+            emitter.send(SseEmitter.event().data(tableInfo.isTotalVisibility()));
+        } catch (IOException e) {
+            emitters.remove(emitter);
+        }
+
+        return emitter;
+    }
+
+    @PutMapping("/change-total-visibility")
     public ResponseEntity<String> changeTotalVisibility() {
-        sendUpdateToClients(tableInfo);
+        tableInfo.setTotalVisibility(!tableInfo.isTotalVisibility());
+        logger.info("Total visibility changed to: " + tableInfo.isTotalVisibility());
+
+        sendTotalVisibilityUpdateToClients();
+
         return ResponseEntity.ok("Total visibility changed successfully");
     }
 
@@ -91,10 +96,22 @@ public class TableDataController {
 
     private void resetTablePoints() {
         for(List<Integer> list : tableInfo.getPoints()){
-            list.replaceAll(i -> 0);
+            Collections.fill(list, 0);
         }
     }
 
+    public void sendTotalVisibilityUpdateToClients() {
+        boolean totalVisibilityData = tableInfo.isTotalVisibility();
+        synchronized(emitters) {
+            for (SseEmitter emitter : new ArrayList<>(emitters)) {
+                try {
+                    emitter.send(SseEmitter.event().data(totalVisibilityData));
+                } catch (IOException e) {
+                    emitters.remove(emitter);
+                }
+            }
+        }
+    }
     public void sendUpdateToClients(Object updateData) {
         synchronized(emitters) {
             for (SseEmitter emitter : new ArrayList<>(emitters)) {
@@ -107,6 +124,27 @@ public class TableDataController {
         }
     }
 
+    private ResponseEntity<String> updatePoints(UpdatePointsRequest request, PointsUpdater pointsUpdater) {
+        int teamIndex = request.getTeamId() - 1;
+        int categoryIndex = request.getCategoryId() - 1;
+        int points = request.getPoints();
+
+        logger.info(request.toString());
+
+        if (isInvalidIndex(teamIndex, categoryIndex)) {
+            return ResponseEntity.badRequest().body("Invalid team ID or category");
+        }
+
+        if (tableInfo.getPoints() == null) {
+            initializePointsList(tableInfo.getNumTeams(), tableInfo.getCategories().size());
+        }
+
+        pointsUpdater.updatePoints(teamIndex, categoryIndex, points);
+        sendUpdateToClients(tableInfo);
+        return ResponseEntity.ok("Points updated successfully");
+    }
+
+
     private void initializePointsList(int numTeams, int numCategories) {
         List<List<Integer>> points = new ArrayList<>();
         for (int i = 0; i < numCategories; i++) {
@@ -115,4 +153,22 @@ public class TableDataController {
         }
         tableInfo.setPoints(points);
     }
+
+    private boolean isInvalidIndex(int teamIndex, int categoryIndex) {
+        return categoryIndex < 0 || teamIndex < 0 || teamIndex >= tableInfo.getNumTeams();
+    }
+
+    private interface PointsUpdater {
+        void updatePoints(int teamIndex, int categoryIndex, int points);
+    }
+
+    private void addPointsToTeam(int teamIndex, int categoryIndex, int points) {
+        int currentPoints = tableInfo.getPoints().get(categoryIndex).get(teamIndex);
+        tableInfo.getPoints().get(categoryIndex).set(teamIndex, currentPoints + points);
+    }
+
+    private void changeTeamScore(int teamIndex, int categoryIndex, int points) {
+        tableInfo.getPoints().get(categoryIndex).set(teamIndex, points);
+    }
+
 }

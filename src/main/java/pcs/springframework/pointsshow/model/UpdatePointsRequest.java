@@ -1,16 +1,16 @@
 package pcs.springframework.pointsshow.model;
 
+
 public class UpdatePointsRequest {
     private int teamId;
-    private String category;
+    private int categoryId;
     private int points;
-
 
     @Override
     public String toString() {
         return "UpdatePointsRequest{" +
                 "teamId=" + teamId +
-                ", category='" + category + '\'' +
+                ", category='" + categoryId + '\'' +
                 ", points=" + points +
                 '}';
     }
@@ -23,12 +23,12 @@ public class UpdatePointsRequest {
         this.teamId = teamId;
     }
 
-    public String getCategory() {
-        return category;
+    public int getCategoryId() {
+        return categoryId;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setCategoryId(int categoryId) {
+        this.categoryId = categoryId;
     }
 
     public int getPoints() {

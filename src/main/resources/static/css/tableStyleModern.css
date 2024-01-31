@@ -32,6 +32,11 @@ td, th {
     50% { background-color: #ff7700; }
 }
 
+@keyframes points-pulse {
+    0%, 100% { background-color: #ffeb3b; }
+    50% { background-color: #ffc107; }
+}
+
 th {
     background-color: #ff5500;
     color: #fff;
@@ -64,6 +69,33 @@ tr:nth-child(even) {
 tr, th, td {
     transition: background-color 0.3s ease;
 }
+
 td {
     color: #000;
+}
+
+.points-pulse-animation {
+    animation: points-pulse 1s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.fadeIn {
+    animation: fadeIn ease 1s;
+    -webkit-animation: fadeIn ease 1s;
+    -moz-animation: fadeIn ease 1s;
+    -o-animation: fadeIn ease 1s;
+    -ms-animation: fadeIn ease 1s;
+}
+
+.total-row-fade {
+    transition: opacity 1.5s ease;
+    opacity: 0;
+}
+
+.total-row-visible {
+    opacity: 1;
 }
